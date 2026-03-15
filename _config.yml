@@ -22,7 +22,7 @@ repository               : "printf404/printf404.github.io"
 #               Additional customization can be done by editing /_includes/author-profile.html
 author:
   # Biographic information
-  avatar           : "profile.png"
+  avatar           : "https://imgchr.com/i/peV1sD1"
   name             : "print404"
   pronouns         : "he"  
   bio              : "what can i say?"
