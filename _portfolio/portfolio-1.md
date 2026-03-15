@@ -1,6 +1,6 @@
 ---
 title: "滚木"
-excerpt: "Short description of portfolio item number 1<br/><img src='/images/500x300.png'>"
+excerpt: "Short description of portfolio item number 1>"
 collection: portfolio
 ---
 滚木
