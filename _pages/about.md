@@ -1,10 +1,17 @@
 ---
 permalink: /
-title: "Academic Pages is a ready-to-fork GitHub Pages template for academic personal websites"
+title: "铁锈战争"
 author_profile: true
 redirect_from: 
   - /about/
   - /about.html
 ---
 
-何意味?
+Welcome to my home
+## 铁锈战争
+printf404
+我整了个铁锈安装包,自己下载
+
+
+点击文字自己下载
+[铁锈战争v1.15](https://pan.quark.cn/s/10547677b603)
