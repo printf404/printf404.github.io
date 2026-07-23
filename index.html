@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>printf404 — log</title>
+<meta name="description" content="printf404 的个人博客，记录代码、生活与杂谈">
+<style>
+/* ===== 基础 ===== */
+:root {
+  --bg: #0c0c0e;
+  --bg-elev: #141417;
+  --fg: #e8e8ea;
+  --fg-dim: #8a8a92;
+  --fg-faint: #4a4a52;
+  --accent: #4cc9f0;       /* 一抹冰蓝 */
+  --accent-soft: rgba(76,201,240,.12);
+  --line: #1d1d22;
+  --radius: 6px;
+  --mono: 'JetBrains Mono','Fira Code','SF Mono',Consolas,monospace;
+  --sans: 'Inter','PingFang SC','Microsoft YaHei',sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  line-height:1.7;
+  overflow-x:hidden;
+  cursor: default;
+}
+
+/* ===== 背景网格（极简蓝图） ===== */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+  z-index:-2;
+  pointer-events:none;
+}
+/* 冰蓝斜光线 */
+body::after {
+  content:'';
+  position:fixed;
+  top:-20%; left:-20%;
+  width:140%; height:140%;
+  background: radial-gradient(ellipse 60% 40% at 20% 10%, rgba(76,201,240,.06), transparent 70%),
+              radial-gradient(ellipse 50% 30% at 85% 90%, rgba(76,201,240,.04), transparent 70%);
+  z-index:-1;
+  pointer-events:none;
+}
+
+/* ===== 点击粒子画布 ===== */
+#click-canvas {
+  position:fixed; inset:0;
+  z-index:9999;
+  pointer-events:none;
+}
+
+/* ===== 导航 ===== */
+nav {
+  position:fixed; top:0; left:0; right:0;
+  z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 40px;
+  background: rgba(12,12,14,.75);
+  backdrop-filter: blur(14px);
+  border-bottom:1px solid var(--line);
+  font-family: var(--mono);
+  font-size:.9rem;
+}
+nav .brand {
+  color:var(--fg); text-decoration:none;
+  letter-spacing:.5px;
+}
+nav .brand .prompt { color:var(--accent); }
+nav ul { list-style:none; display:flex; gap:28px; }
+nav a { color:var(--fg-dim); text-decoration:none; transition:color .2s; }
+nav a:hover { color:var(--accent); }
+
+/* ===== 布局 ===== */
+main {
+  max-width:760px;
+  margin:0 auto;
+  padding:120px 24px 80px;
+}
+
+/* ===== 头部 hero ===== */
+.hero { margin-bottom:80px; perspective:1000px; }
+.hero-card {
+  transform-style:preserve-3d;
+  transition: transform .12s ease-out;
+  will-change: transform;
+}
+.hero h1 {
+  font-size:clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight:600;
+  letter-spacing:-.5px;
+  margin-bottom:14px;
+}
+.hero h1 .accent { color:var(--accent); }
+.hero .sub {
+  color:var(--fg-dim);
+  font-size:1rem;
+  max-width:52ch;
+  margin-bottom:28px;
+}
+.hero .meta {
+  font-family:var(--mono);
+  font-size:.8rem;
+  color:var(--fg-faint);
+  display:flex; gap:18px; flex-wrap:wrap;
+}
+
+/* ===== 头像（蓝色苹果 PNG） ===== */
+.avatar-wrap {
+  position:relative;
+  width:96px; height:96px;
+  margin:0 auto 28px;
+}
+.avatar {
+  width:100%; height:100%;
+  object-fit:contain;
+  position:relative; z-index:2;
+  filter: drop-shadow(0 0 12px rgba(76,201,240,.55));
+  transition: transform .35s ease;
+}
+.avatar:hover { transform: scale(1.08); }
+/* 头像背后的光晕圆环 */
+.avatar-glow {
+  position:absolute; inset:-6px;
+  border-radius:50%;
+  border:1.5px solid rgba(76,201,240,.35);
+  z-index:1;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%,100% { transform:scale(1);   opacity:.6; }
+  50%     { transform:scale(1.12); opacity:1;  }
+}
+
+/* ===== 区块标题 ===== */
+.section-label {
+  font-family:var(--mono);
+  font-size:.78rem;
+  color:var(--fg-faint);
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-bottom:24px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-label::before {
+  content:'';
+  width:24px; height:1px;
+  background:var(--accent);
+}
+
+/* ===== 文章列表 ===== */
+.post-list { list-style:none; margin-bottom:80px; }
+.post-item {
+  border-bottom:1px solid var(--line);
+  padding:22px 0;
+  transform-style:preserve-3d;
+  transition: transform .15s ease-out;
+  will-change: transform;
+}
+.post-item:last-child { border-bottom:none; }
+.post-link {
+  display:block;
+  text-decoration:none;
+  color:inherit;
+}
+.post-row {
+  display:flex; align-items:baseline; gap:18px; flex-wrap:wrap;
+}
+.post-date {
+  font-family:var(--mono);
+  font-size:.78rem;
+  color:var(--fg-faint);
+  flex:0 0 90px;
+}
+.post-title {
+  font-size:1.15rem;
+  color:var(--fg);
+  font-weight:500;
+  transition:color .2s;
+}
+.post-link:hover .post-title { color:var(--accent); }
+.post-tag {
+  font-family:var(--mono);
+  font-size:.7rem;
+  color:var(--accent);
+  border:1px solid var(--accent-soft);
+  padding:1px 8px;
+  border-radius:3px;
+  margin-left:auto;
+}
+.post-excerpt {
+  color:var(--fg-dim);
+  font-size:.92rem;
+  margin-top:6px;
+  max-width:62ch;
+}
+
+/* ===== 关于 ===== */
+.about { margin-bottom:80px; }
+.about p {
+  color:var(--fg-dim);
+  margin-bottom:14px;
+  max-width:62ch;
+}
+.about a { color:var(--accent); text-decoration:none; border-bottom:1px dashed var(--accent-soft); }
+.about a:hover { border-bottom-color:var(--accent); }
+
+/* ===== 页脚 ===== */
+footer {
+  border-top:1px solid var(--line);
+  padding:30px 24px;
+  text-align:center;
+  font-family:var(--mono);
+  font-size:.78rem;
+  color:var(--fg-faint);
+}
+footer a { color:var(--fg-dim); text-decoration:none; }
+footer a:hover { color:var(--accent); }
+
+/* ===== 滚动显现 ===== */
+.fade-up {
+  opacity:0; transform:translateY(24px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.fade-up.in { opacity:1; transform:translateY(0); }
+
+/* ===== 鼠标 tilt 提示 ===== */
+.tilt-hint {
+  font-family:var(--mono);
+  font-size:.72rem;
+  color:var(--fg-faint);
+  margin-top:18px;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width:640px){
+  nav { padding:14px 18px; }
+  nav ul { display:none; }
+  main { padding:100px 18px 60px; }
+  .post-row { flex-direction:column; gap:4px; }
+  .post-tag { margin-left:0; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="click-canvas"></canvas>
+
+<nav>
+  <a href="/" class="brand"><span class="prompt">~/</span>printf404</a>
+  <ul>
+    <li><a href="#posts">posts</a></li>
+    <li><a href="#about">about</a></li>
+    <li><a href="https://github.com/printf404" target="_blank" rel="noopener">github</a></li>
+    <li><a href="mailto:hi@printf404.dev">contact</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-card" id="hero-card">
+      <!-- 蓝色苹果头像 -->
+      <div class="avatar-wrap">
+        <img src="images/blue_apple.png" alt="printf404" class="avatar">
+        <div class="avatar-glow"></div>
+      </div>
+      <h1>hi, i'm <span class="accent">printf404</span>.</h1>
+      <p class="sub">
+        一名写代码的普通人。这里记录我敲过的代码、踩过的坑、和偶尔冒出来的生活碎片。
+        不爱废话，尽量把事情讲清楚。
+      </p>
+      <div class="meta">
+        <span>📍 中国</span>
+        <span>💻 全栈 / 业余设计</span>
+        <span>☕ 咖啡因驱动</span>
+      </div>
+      <div class="tilt-hint">// 移动鼠标试试 ↑ 卡片会跟着歪</div>
+    </div>
+  </section>
+
+  <!-- 文章列表 -->
+  <section id="posts" class="fade-up">
+    <div class="section-label">recent posts</div>
+    <ul class="post-list" id="post-list">
+      <!-- 由 JS 渲染 -->
+    </ul>
+  </section>
+
+  <!-- 关于 -->
+  <section id="about" class="about fade-up">
+    <div class="section-label">about</div>
+    <p>
+      你好，我是 printf404。名字来自那个经典的 C 语言函数——
+      某种程度上，我也在不停往世界这块屏幕上打印点什么。
+    </p>
+    <p>
+      这个站点是一个纯静态博客，托管在 GitHub Pages 上。
+      没有追踪脚本、没有 cookie 横幅、没有烦人的弹窗。
+      你读到的每一个字都是我亲手写的。
+    </p>
+    <p>
+      如果想联系我，发邮件到
+      <a href="mailto:hi@printf404.dev">hi@printf404.dev</a> 最快。
+      也可以在 <a href="https://github.com/printf404" target="_blank" rel="noopener">GitHub</a> 上找到我。
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2026 printf404 · built with html, css & a little bit of js</p>
+  <p style="margin-top:6px;"><a href="/404.html">/404</a> · <a href="/feed.xml">rss</a> · <a href="https://github.com/printf404/printf404.github.io" target="_blank" rel="noopener">source</a></p>
+</footer>
+
+<script>
+/* ========== 1. 文章数据（后续可换成真正的内容） ========== */
+const posts = [
+  {
+    date: '2026-07-18',
+    title: '为什么我又重写了自己的博客',
+    tag: 'tech',
+    excerpt: '第三版。这一次我决定彻底抛弃框架，回到最朴素的 HTML。顺便聊聊"工具焦虑"这件事。',
+    url: '#'
+  },
+  {
+    date: '2026-07-02',
+    title: '在便利店打工的一周，我学到了什么',
+    tag: 'life',
+    excerpt: '一次临时起意的社会实验。收银机、关东煮和深夜的冷柜，比任何管理学书都更教人理解"系统"。',
+    url: '#'
+  },
+  {
+    date: '2026-06-21',
+    title: '写给非科班：怎么把"学过一点 Python"变成能写进简历的项目',
+    tag: 'tech',
+    excerpt: '一套我自己用过的、从零到能展示的最小路径。附三个真实可做的选题。',
+    url: '#'
+  },
+  {
+    date: '2026-06-05',
+    title: '城市散步：一条没有红绿灯的回家路',
+    tag: 'essay',
+    excerpt: '关于一条小路、几只猫、和某个傍晚突然涌上来的、莫名其妙的安心感。',
+    url: '#'
+  },
+  {
+    date: '2026-05-19',
+    title: '我把所有笔记软件都卸载了',
+    tag: 'tech',
+    excerpt: '最终回归到一个 200 行的脚本 + 纯文本文件夹。工具越少，写得越多。',
+    url: '#'
+  },
+];
+
+/* 渲染列表 */
+const list = document.getElementById('post-list');
+list.innerHTML = posts.map(p => `
+  <li class="post-item tilt-card">
+    <a href="${p.url}" class="post-link">
+      <div class="post-row">
+        <span class="post-date">${p.date}</span>
+        <span class="post-title">${p.title}</span>
+        <span class="post-tag">${p.tag}</span>
+      </div>
+      <p class="post-excerpt">${p.excerpt}</p>
+    </a>
+  </li>
+`).join('');
+
+/* ========== 2. 3D 倾斜跟随（hero + 每张卡片） ========== */
+const MAX_TILT = 8; // 最大倾斜角度
+function bindTilt(el, intensity = 1) {
+  el.addEventListener('mousemove', (e) => {
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;   // -0.5 ~ 0.5
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    const rx = (-y * MAX_TILT * intensity).toFixed(2);
+    const ry = ( x * MAX_TILT * intensity).toFixed(2);
+    el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = 'rotateX(0) rotateY(0)';
+  });
+}
+bindTilt(document.getElementById('hero-card'), 1.2);
+document.querySelectorAll('.tilt-card').forEach(c => bindTilt(c, 0.6));
+
+/* ========== 3. 点击粒子爆开 ========== */
+const cvs = document.getElementById('click-canvas');
+const ctx = cvs.getContext('2d');
+let particles = [];
+function resize(){ cvs.width = innerWidth; cvs.height = innerHeight; }
+resize(); addEventListener('resize', resize);
+
+class P {
+  constructor(x,y) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = 2 + Math.random() * 4;
+    this.x=x; this.y=y;
+    this.vx = Math.cos(ang)*spd;
+    this.vy = Math.sin(ang)*spd;
+    this.gravity = 0.18;
+    this.life = 1;
+    this.decay = 0.018 + Math.random()*0.012;
+    this.r = 1.5 + Math.random()*2;
+    // 冰蓝 / 白 / 偶尔一抹灰
+    const pal = ['#4cc9f0','#ffffff','#9bd9ee','#cfeef7'];
+    this.color = pal[Math.floor(Math.random()*pal.length)];
+  }
+  update(){ this.vy += this.gravity; this.x+=this.vx; this.y+=this.vy; this.life-=this.decay; }
+  draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=this.color; ctx.globalAlpha=Math.max(this.life,0); ctx.fill(); ctx.globalAlpha=1; }
+}
+
+addEventListener('click', (e) => {
+  // 忽略点击链接时的装饰性爆炸（可选）
+  for(let i=0;i<22;i++) particles.push(new P(e.clientX, e.clientY));
+});
+
+function loop(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  particles.forEach(p=>p.update());
+  particles.forEach(p=>p.draw());
+  particles = particles.filter(p=>p.life>0);
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* ========== 4. 滚动显现 ========== */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:0.15});
+document.querySelectorAll('.fade-up').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
