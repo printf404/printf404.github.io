@@ -116,6 +116,33 @@ main {
   display:flex; gap:18px; flex-wrap:wrap;
 }
 
+/* ===== 头像（蓝色苹果 PNG） ===== */
+.avatar-wrap {
+  position:relative;
+  width:96px; height:96px;
+  margin:0 auto 28px;
+}
+.avatar {
+  width:100%; height:100%;
+  object-fit:contain;
+  position:relative; z-index:2;
+  filter: drop-shadow(0 0 12px rgba(76,201,240,.55));
+  transition: transform .35s ease;
+}
+.avatar:hover { transform: scale(1.08); }
+/* 头像背后的光晕圆环 */
+.avatar-glow {
+  position:absolute; inset:-6px;
+  border-radius:50%;
+  border:1.5px solid rgba(76,201,240,.35);
+  z-index:1;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%,100% { transform:scale(1);   opacity:.6; }
+  50%     { transform:scale(1.12); opacity:1;  }
+}
+
 /* ===== 区块标题 ===== */
 .section-label {
   font-family:var(--mono);
@@ -245,6 +272,11 @@ footer a:hover { color:var(--accent); }
   <!-- Hero -->
   <section class="hero">
     <div class="hero-card" id="hero-card">
+      <!-- 蓝色苹果头像 -->
+      <div class="avatar-wrap">
+        <img src="images/blue_apple.png" alt="printf404" class="avatar">
+        <div class="avatar-glow"></div>
+      </div>
       <h1>hi, i'm <span class="accent">printf404</span>.</h1>
       <p class="sub">
         一名写代码的普通人。这里记录我敲过的代码、踩过的坑、和偶尔冒出来的生活碎片。
